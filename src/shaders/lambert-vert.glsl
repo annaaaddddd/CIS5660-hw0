@@ -18,6 +18,8 @@ uniform mat4 u_ModelInvTr;  // The inverse transpose of the model matrix.
 uniform mat4 u_ViewProj;    // The matrix that defines the camera's transformation.
                             // We've written a static matrix for you to use for HW2,
                             // but in HW3 you'll have to generate one yourself
+uniform float u_Time;       // Time value updated every frame from TypeScript.
+                            // Used to animate the vertex deformation.
 
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
@@ -28,6 +30,9 @@ in vec4 vs_Col;             // The array of vertex colors passed to the shader.
 out vec4 fs_Nor;            // The array of normals that has been transformed by u_ModelInvTr. This is implicitly passed to the fragment shader.
 out vec4 fs_LightVec;       // The direction in which our virtual light lies, relative to each vertex. This is implicitly passed to the fragment shader.
 out vec4 fs_Col;            // The color of each vertex. This is implicitly passed to the fragment shader.
+out vec4 fs_Pos;            // Original object-space position.
+                            // This is intentionally kept separate from the deformed position
+                            // so the procedural FBM pattern stays attached to the object's surface.
 
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
                                         //the geometry in the fragment shader.
@@ -45,9 +50,15 @@ void main()
 
 
     vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
-
+    modelposition.y += sin(u_Time + modelposition.x); // Apply time-based, non-uniform vertex deformation.
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
 
     gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
                                              // used to render the final positions of the geometry's vertices
+
+    // Pass the ORIGINAL object-space position to the fragment shader.
+    // This makes the noise pattern behave more like it is attached
+    // to the object's surface instead of being sampled from a fixed
+    // world-space noise field.
+    fs_Pos = vs_Pos;
 }
